@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Canvas</title>
+    <style>
+      body {
+        background-color: rgb(107, 107, 107);
+      }
+      canvas {
+        background-color: rgb(199, 199, 199);
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="myCanvas" width="1400" height="900"></canvas>
+    <script type="module">
+      import { Game } from "./Game.js";
+      new Game("myCanvas");
+    </script>
+  </body>
+</html>
