@@ -11,7 +11,6 @@ export class Game {
         // Variables para el temporizador
         this.totalSeconds = 0;
         this.startTime = Date.now();
-        this.updateTime();
 
         // Cargar imágenes para paredes y suelo
         this.wallImage = new Image();
@@ -25,14 +24,13 @@ export class Game {
 
         this.initObjects();
         this.setupEventListeners();
-        this.paint();
+
+        requestAnimationFrame(() => this.paint());
     }
 
     // Funcion para timer
     updateTime() {
-        setInterval(() => {
-            this.totalSeconds = Math.floor((Date.now() - this.startTime) / 1000);
-        }, 1000);
+        this.totalSeconds = Math.floor((Date.now() - this.startTime) / 1000);
     }
 
     formatTime(seconds) {
@@ -48,16 +46,21 @@ export class Game {
     initObjects() {
         // Player
         this.player = new Player(50, 50, 50, 50, "white", 50);
-        // Targets
-        this.targets = [
-            this.target = new Rectangulo(50, 50, 50, 250, null, 0, './resources/target.png'),
-            this.target = new Rectangulo(50, 50, 950, 950, null, 0, './resources/target.png'),
-            this.target = new Rectangulo(50, 50, 1700, 50, null, 0, './resources/target.png'),
-            this.target = new Rectangulo(50, 50, 750, 550, null, 0, './resources/target.png'),
-            this.target = new Rectangulo(50, 50, 250, 750, null, 0, './resources/target.png'),
-            this.target = new Rectangulo(50, 50, 1150, 150, null, 0, './resources/target.png'),
-            this.target = new Rectangulo(50, 50, 1250, 950, null, 0, './resources/target.png'),
+
+        // Target
+        this.targetPositions = [
+            // Reposicionar los objetivos
+            { x: 50, y: 250 },
+            { x: 950, y: 950 },
+            { x: 1700, y: 50 },
+            { x: 750, y: 550 },
+            { x: 250, y: 750 },
+            { x: 1150, y: 150 },
+            { x: 1250, y: 950 }
         ];
+
+        this.targets = this.targetPositions.map(pos => new Rectangulo(50, 50, pos.x, pos.y, null, 0, './resources/target.png'));
+
         // Orb blue
         this.blueOrb = new Rectangulo(50, 50, 1550, 250, null, 0, './resources/blueOrb.png');
         // Orb red
@@ -86,18 +89,16 @@ export class Game {
             [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         ];
-
         // Arreglo de obstaculos de colores
         this.walls = [
-            this.wall = new Rectangulo(50, 50, 300, 250, "red", 0, './resources/redWood.png'),
-            this.wall = new Rectangulo(50, 50, 600, 450, "red", 0, './resources/redWood.png'),
-            this.wall = new Rectangulo(50, 50, 1300, 950, "red", 0, './resources/redWood.png'),
-            this.wall = new Rectangulo(50, 50, 50, 200, "blue", 0, './resources/blueWood.png'),
-            this.wall = new Rectangulo(50, 50, 1750, 50, "blue", 0, './resources/blueWood.png'),
-            this.wall = new Rectangulo(50, 50, 1150, 200, "blue", 0, './resources/blueWood.png'),
+            new Rectangulo(50, 50, 300, 250, "red", 0, './resources/redWood.png'),
+            new Rectangulo(50, 50, 600, 450, "red", 0, './resources/redWood.png'),
+            new Rectangulo(50, 50, 1300, 950, "red", 0, './resources/redWood.png'),
+            new Rectangulo(50, 50, 50, 200, "blue", 0, './resources/blueWood.png'),
+            new Rectangulo(50, 50, 1750, 50, "blue", 0, './resources/blueWood.png'),
+            new Rectangulo(50, 50, 1150, 200, "blue", 0, './resources/blueWood.png'),
         ];
     }
-
     // Movimiento
     setupEventListeners() {
         document.addEventListener("keydown", (e) => {
@@ -126,18 +127,19 @@ export class Game {
         });
     }
 
+
     movePlayer(dx, dy) {
         // Reproducir sonido
         this.themeSound.play();
-        this.themeSound.loop = true
+        this.themeSound.loop = true;
         // Obtener posicion anterior del jugador temporal
-        let prevX = this.player.x;
-        let prevY = this.player.y;
-
+        const prevX = this.player.x;
+        const prevY = this.player.y;
         this.player.move(dx, dy);
 
-        // Obtener la posición actual en el laberinto
+        // Tamaño de cada espacio en el arreglo
         const tileSize = 50;
+        // Obtener la posición actual en el laberinto
         const tileX = Math.floor(this.player.x / tileSize);
         const tileY = Math.floor(this.player.y / tileSize);
 
@@ -149,19 +151,13 @@ export class Game {
 
         this.player.handleCollisionWithWalls(this.walls, prevX, prevY);
 
-        // Verificar colisión con el target y orbes
-        if (this.player.colision(this.target)) {
-            this.points += 1;
-        }
-
         this.getOrb();
-        this.paint();
 
-        // Al recoger target
         this.targets.forEach((target, index) => {
             if (this.player.colision(target)) {
                 this.targets.splice(index, 1);
                 this.pointSound.play();
+                // Verificar colisión con el target
                 this.points += 1;
             }
             if (this.points >= 7) {
@@ -169,8 +165,9 @@ export class Game {
                 this.restartGame();
             }
         });
-    }
 
+        this.paint();
+    }
     // Al tocar orbes cambiar apariencia
     getOrb() {
         if (this.player.colision(this.blueOrb)) {
@@ -187,38 +184,22 @@ export class Game {
         this.points = 0;
         this.totalSeconds = 0;
         this.startTime = Date.now();
-
         // Reiniciar la posición del jugador
         this.player.x = 50;
         this.player.y = 50;
-
-        // Reposicionar los objetivos
-        this.targets.forEach((target) => {
-            this.targets = [
-                this.target = new Rectangulo(50, 50, 50, 250, null, 0, './resources/target.png'),
-                this.target = new Rectangulo(50, 50, 950, 950, null, 0, './resources/target.png'),
-                this.target = new Rectangulo(50, 50, 1700, 50, null, 0, './resources/target.png'),
-                this.target = new Rectangulo(50, 50, 750, 550, null, 0, './resources/target.png'),
-                this.target = new Rectangulo(50, 50, 250, 750, null, 0, './resources/target.png'),
-                this.target = new Rectangulo(50, 50, 1150, 150, null, 0, './resources/target.png'),
-                this.target = new Rectangulo(50, 50, 1250, 950, null, 0, './resources/target.png'),
-            ];
-        });
-
+        this.initObjects();
         // Reiniciar el sonido de fondo
         this.themeSound.currentTime = 0;
-        this.playThemeSound();
     }
 
     paint() {
+        if (this.pause) return;
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
         // Puntos
         this.ctx.font = "20px Arial";
         this.ctx.fillStyle = "black";
         this.ctx.fillText("Puntos: " + this.points, 1950, 50);
-
         // Dibujar el laberinto
         const tileSize = 50;
         for (let y = 0; y < this.maze.length; y++) {
@@ -226,63 +207,53 @@ export class Game {
                 if (this.maze[y][x] === 1) {
                     // Dibujar pared
                     this.ctx.drawImage(this.wallImage, x * tileSize, y * tileSize, tileSize, tileSize);
-                } else if (this.maze[y][x] === 0) {
+                } else {
                     // Dibujar suelo
                     this.ctx.drawImage(this.floorImage, x * tileSize, y * tileSize, tileSize, tileSize);
                 }
             }
         }
-
         // Dibujar el jugador
         this.player.render(this.ctx);
-
         // Dibujar el objetivo
         this.targets.forEach(target => target.render(this.ctx));
-
         // Dibujar los orbes
         this.blueOrb.render(this.ctx);
         this.redOrb.render(this.ctx);
-
         // Dibujar las paredes
-        this.walls.forEach((wall) => {
-            wall.render(this.ctx);
-        });
+        this.walls.forEach(wall => wall.render(this.ctx));
 
         // Timer
-        this.ctx.font = "20px Arial";
-        this.ctx.fillStyle = "black";
         this.ctx.fillText(this.formatTime(this.totalSeconds), 2300, 50);
-
         // Movimiento
-        this.ctx.font = "20px Arial";
         this.ctx.fillText("Movimiento -> W - A - S - D", 1950, 120);
-
         // Info
         this.ctx.fillText("Consumir", 1950, 190);
         this.ctx.fillText("Transforma en", 2080, 190);
         this.ctx.fillText("Atraviesa", 2270, 190);
 
-        // Info azul
-        const orbeazul = new Image();
-        orbeazul.src = "./resources/blueOrb.png";
-        this.ctx.drawImage(orbeazul, 1950, 200, 80, 80);
-        const ranaazul = new Image();
-        ranaazul.src = "./resources/frog_blue_left.png";
-        this.ctx.drawImage(ranaazul, 2090, 190, 80, 80);
-        const bluewood = new Image();
-        bluewood.src = "./resources/bluewood.png";
-        this.ctx.drawImage(bluewood, 2280, 210, 60, 60);
-
         // Info rojo
-        const orberojo = new Image();
-        orberojo.src = "./resources/redOrb.png";
-        this.ctx.drawImage(orberojo, 1950, 270, 80, 80);
-        const ranaroja = new Image();
-        ranaroja.src = "./resources/frog_red_left.png";
-        this.ctx.drawImage(ranaroja, 2090, 270, 80, 80);
-        const redwood = new Image();
-        redwood.src = "./resources/redwood.png";
-        this.ctx.drawImage(redwood, 2280, 290, 60, 60);
+        const redOrb = new Image();
+        redOrb.src = './resources/redOrb.png';
+        this.ctx.drawImage(redOrb, 1950, 230, 70, 70);
+        const redFrog = new Image();
+        redFrog.src = './resources/frog_red_left.png';
+        this.ctx.drawImage(redFrog, 2100, 230, 70, 70);
+        const redWoodImg = new Image();
+        redWoodImg.src = './resources/redWood.png';
+        this.ctx.drawImage(redWoodImg, 2290, 240, 50, 50);
+
+        // Infor azul
+        const blueOrb = new Image();
+        blueOrb.src = './resources/blueOrb.png';
+        this.ctx.drawImage(blueOrb, 1950, 310, 70, 70);
+        const blueFrog = new Image();
+        blueFrog.src = './resources/frog_blue_left.png';
+        this.ctx.drawImage(blueFrog, 2100, 310, 70, 70);
+        const blueWoodImg = new Image();
+        blueWoodImg.src = './resources/blueWood.png';
+        this.ctx.drawImage(blueWoodImg, 2290, 310, 50, 50);
+
 
         // Objetivo
         this.ctx.fillText("El objetivo del juego es conseguir todos los", 1950, 400);
@@ -290,6 +261,8 @@ export class Game {
         const coca = new Image();
         coca.src = "./resources/si.png";
         this.ctx.drawImage(coca, 2010, 450, 300, 300);
+
+        this.updateTime();
 
         // Pausa
         if (this.pause) {
@@ -301,5 +274,6 @@ export class Game {
         } else {
             requestAnimationFrame(() => this.paint());
         }
+
     }
 }
