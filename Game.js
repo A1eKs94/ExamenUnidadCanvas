@@ -7,23 +7,74 @@ export class Game {
         this.ctx = this.canvas.getContext('2d');
         this.pause = false;
         this.points = 0;
+
+        // Cargar imágenes para paredes y suelo
+        this.wallImage = new Image();
+        this.wallImage.src = './resources/maze_wall.png';
+
+        this.floorImage = new Image();
+        this.floorImage.src = './resources/floor.png';
+
         this.initObjects();
         this.setupEventListeners();
         this.paint();
     }
 
+
+
     initObjects() {
-        this.player = new Player(50, 50, 100, 100, "red", 5);
-        this.target = new Rectangulo(10, 10, 150, 150, "black", 0);
+        // Contador de tiempo
+        var minutesLabel = document.getElementById("minutes");
+        var secondsLabel = document.getElementById("seconds");
+        var totalSeconds = 0;
+        setInterval(setTime, 1000);
+
+        function setTime() {
+            ++totalSeconds;
+            secondsLabel.innerHTML = pad(totalSeconds % 60);
+            minutesLabel.innerHTML = pad(parseInt(totalSeconds / 60));
+        }
+
+        function pad(val) {
+            var valString = val + "";
+            if (valString.length < 2) {
+                return "0" + valString;
+            } else {
+                return valString;
+            }
+        }
+
+        this.player = new Player(50, 50, 50, 50, "white", 50);
+        this.target = new Rectangulo(50, 50, 150, 150, "black", 0, './resources/target.png');
         this.blueOrb = new Rectangulo(50, 50, 200, 200, null, 0, './resources/blueOrb.png');
-        this.redOrb = new Rectangulo(50, 50, 280, 280, null, 0, './resources/redOrb.png');
+        this.redOrb = new Rectangulo(50, 50, 350, 250, null, 0, './resources/redOrb.png');
+
+        this.maze = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+            [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1],
+            [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+            [1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
+            [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+            [1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1],
+            [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+            [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+            [1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
+            [1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1],
+            [1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1],
+            [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1],
+            [1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1],
+            [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1],
+            [1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1],
+            [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        ];
 
         this.walls = [
-            new Rectangulo(100, 30, 0, 200, "blue", 0),
-            new Rectangulo(100, 30, 250, 200, "blue", 0),
-            new Rectangulo(30, 300, 100, 20, "blue", 0),
-            new Rectangulo(30, 300, 100, 450, "blue", 0),
-            new Rectangulo(100, 30, 470, 200, "red", 0)
+            this.wall = new Rectangulo(50, 50, 300, 250, "red")
         ];
     }
 
@@ -58,27 +109,23 @@ export class Game {
 
         this.player.move(dx, dy);
 
-        // En caso de que sobrepase los límites
-        if (this.player.x < 0) {
-            this.player.x = 1399;
-        }
-        if (this.player.x > 1400) {
-            this.player.x = 0;
-        }
-        if (this.player.y < 0) {
-            this.player.y = 899;
-        }
-        if (this.player.y > 900) {
-            this.player.y = 0;
-        }
+        // Obtener la posición actual en el laberinto
+        const tileSize = 50;
+        const tileX = Math.floor(this.player.x / tileSize);
+        const tileY = Math.floor(this.player.y / tileSize);
 
         // Verificar colisión con muros
+        if (this.maze[tileY] && this.maze[tileY][tileX] === 1) {
+            this.player.x = prevX;
+            this.player.y = prevY;
+        }
+
         this.player.handleCollisionWithWalls(this.walls, prevX, prevY);
 
         // Verificar colisión con el target y orbes
         if (this.player.colision(this.target)) {
-            this.target.x = Math.floor(Math.random() * 490);
-            this.target.y = Math.floor(Math.random() * 490);
+            this.target.x = Math.floor(Math.random() * (this.canvas.width - this.target.width));
+            this.target.y = Math.floor(Math.random() * (this.canvas.height - this.target.height));
             this.points += 1;
         }
         this.getOrb();
@@ -88,24 +135,34 @@ export class Game {
 
     getOrb() {
         if (this.player.colision(this.blueOrb)) {
-          this.player.changeAppearance('blue');
-          this.blueOrb.x = Math.floor(Math.random() * 490);
-          this.blueOrb.y = Math.floor(Math.random() * 490);
+            this.player.changeAppearance('blue');
         }
-      
+
         if (this.player.colision(this.redOrb)) {
-          this.player.changeAppearance('red');
-          this.redOrb.x = Math.floor(Math.random() * 490);
-          this.redOrb.y = Math.floor(Math.random() * 490);
+            this.player.changeAppearance('red');
         }
-      }
-      
+    }
+
     paint() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         this.ctx.font = "20px Arial";
         this.ctx.fillStyle = "black";
         this.ctx.fillText("Points: " + this.points, 20, 20);
+
+        // Dibujar el laberinto
+        const tileSize = 50;
+        for (let y = 0; y < this.maze.length; y++) {
+            for (let x = 0; x < this.maze[y].length; x++) {
+                if (this.maze[y][x] === 1) {
+                    // Dibujar pared
+                    this.ctx.drawImage(this.wallImage, x * tileSize, y * tileSize, tileSize, tileSize);
+                } else if (this.maze[y][x] === 0) {
+                    // Dibujar suelo
+                    this.ctx.drawImage(this.floorImage, x * tileSize, y * tileSize, tileSize, tileSize);
+                }
+            }
+        }
 
         // Dibujar el jugador
         this.player.render(this.ctx);
@@ -121,6 +178,8 @@ export class Game {
         this.walls.forEach((wall) => {
             wall.render(this.ctx);
         });
+
+
 
         if (this.pause) {
             this.ctx.font = "50px Arial";
